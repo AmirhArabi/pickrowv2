@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Pick Row</title>
+    <link rel="icon" href="https://pickrow.com/wp-content/uploads/2024/12/logo-1-100x100.png" sizes="32x32" />
+<link rel="icon" href="https://pickrow.com/wp-content/uploads/2024/12/logo-1.png" sizes="192x192" />
+<link rel="apple-touch-icon" href="https://pickrow.com/wp-content/uploads/2024/12/logo-1.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
+      <link href="https://fonts.cdnfonts.com/css/arial-2" rel="stylesheet">
+        <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/arial-2">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+
+  </head>
+  <body>
+    <div class="container" style="margin-top: 8%;margin-bottom: 15%;">
+      <div class="text-center">
+          <img src="{% static 'images/logog.png' %}" style="width: 60%;min-width: 300px;">
+        <p style="font-size: 20px;line-height: 30px;margin-bottom: 20px;text-align: center;line-height: 15px;letter-spacing: 0px;filter: brightness(0%);font-weight: bold;font-family: 'Arial Narrow';">In the interest of our company to achieve the highest levels of <br>
+          <br>Efficincy for our customers and to ensure that they receive the <br>
+          <br>original products offred by our company, we hope that the <br>
+          <br>number listed in the product is searched to verify the origin of <br>
+          <br>the product.
+        </p>
+      </div>
+      <div class="text-center" style="justify-content: center">
+            <form method="POST" class="post-form">
+            {% csrf_token %}
+
+            <div class="text-center" style="margin-bottom: 10px;">
+                <p style="color: var(--bs-red);font-size: 20px;font-weight: bold;font-family: 'Arial Narrow';">Note: Your code is valid for one time use</p>
+                <input required name="pcode" type="text" style="display: block; margin: 10px auto; border-style: solid;border-radius: 5px;width: 350px;height: 40px;font-weight: bold;font-family: 'Arial Narrow';" placeholder="Enter your code here...">
+                <div>
+                    <input id="phone" name="phone_number" type="tel" style="display: block; margin: 10px auto; border-style: solid;border-radius: 5px;width: 350px;height: 40px;font-weight: bold;font-family: 'Arial Narrow';">
+                    <div id="error-msg" style="color: red; display: none;">Enter a phone number to receive the code</div>
+                  </div>
+                  
+            </div>
+          <div class="text-center">
+            <button class="btn btn-primary" type="submit" style="background: var(--bs-black);font-weight: bold;width: 120px;height: 40px;font-weight: bold;font-family: 'Arial Narrow';">Search</button>
+          </div>
+          </form>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"></script>
+  <script>
+    const input = document.querySelector("#phone");
+
+window.intlTelInput(input, {
+  initialCountry: "auto",
+  nationalMode: false,
+  separateDialCode: true,
+  geoIpLookup: function(callback) {
+    fetch("https://ipapi.co/json")
+      .then(response => response.json())
+      .then(data => {
+        const countryCode = data.country_code ? data.country_code.toLowerCase() : "us";
+        callback(countryCode);
+      })
+      .catch(() => {
+        callback("es");
+      });
+  },
+  utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+});
+  </script>
+  </body>
+</html>

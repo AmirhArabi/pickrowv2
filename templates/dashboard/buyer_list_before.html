@@ -1,0 +1,34 @@
+{% load unfold i18n %}
+
+<div class="border border-2 border-base-300 border-dashed mb-4 p-3 rounded rounded-xl">
+    <h1 class="text-xl font-bold mb-4">
+        Buyers Information
+    </h1>
+    <div class="grid gap-8 mb-4 md:grid-cols-2 lg:grid-cols-4">
+
+        <!-- buyer with most product Verifications -->
+        {% component "unfold/components/card.html" %}
+            <h3 class="text-xl mb-2">Most Verifications</h3>
+            {% component "unfold/components/title.html" with component_class="BuyerMostVerificationsComponent" %}{% endcomponent %}
+        {% endcomponent %}
+
+        <!-- buyer with least product Verifications -->
+        {% component "unfold/components/card.html" %}
+            <h3 class="text-xl mb-2">Least Verifications</h3>
+            {% component "unfold/components/title.html" with component_class="BuyerNoneVerificationsComponent" %}{% endcomponent %}
+        {% endcomponent %}
+
+        <!-- buyer with most products -->
+        {% component "unfold/components/card.html" %}
+            <h3 class="text-xl mb-2">Most Products</h3>
+            {% component "unfold/components/title.html" with component_class="BuyerMostProductsComponent" %}{% endcomponent %}
+        {% endcomponent %}
+
+        <!-- buyer with least products -->
+        {% component "unfold/components/card.html" %}
+            <h3 class="text-xl mb-2">Least Products</h3>
+            {% component "unfold/components/title.html" with component_class="BuyerLeastProductsComponent" %}{% endcomponent %}
+        {% endcomponent %}
+    </div>
+
+</div>

@@ -1,0 +1,348 @@
+{% extends 'unfold/layouts/base_simple.html' %}
+
+{% load i18n unfold %}
+{% load static %}
+
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block title %}
+    {% if subtitle %}
+        {{ subtitle }} |
+    {% endif %}
+
+    {{ title }} | {{ site_title|default:_('Advanced PickRow Dashboard') }}
+{% endblock %}
+
+  {% block head %}
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  {% endblock %}
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block extrahead %}
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.46.0/dist/apexcharts.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+    {% component "unfold/components/container.html" %}
+        <div class="flex flex-col gap-4">
+            {% component "unfold/components/navigation.html" with items=navigation %}
+            {% endcomponent %}
+
+            {% component "unfold/components/navigation.html" with class="ml-auto" items=filters %}
+            {% endcomponent %}
+        </div>
+        
+          <!-- cards -->
+
+        <div class="flex flex-col gap-8 lg:flex-row">
+            {% for card in cards %}
+                {% component "unfold/components/test_card.html" with class="lg:w-1/2 card" icon=card.icon color=card.color %}
+                    {% component "unfold/components/text.html" with color="#667085" %}
+                        {{ card.title }}
+                    {% endcomponent %}
+                    {% component "unfold/components/title.html" %}
+                        {{ card.metric }}
+                    {% endcomponent %}
+                {% endcomponent %}
+            {% endfor %}
+        </div>
+        
+
+
+        <!-- device type chart -->
+        <div class="flex flex-col gap-8 lg:flex-row">
+
+            <!-- chart card -->
+            <div class="container mx-auto flex flex-col gap-8 lg:flex-row mt-6 max-w-2xl">
+                {% component "unfold/components/card.html" with title=_("Device Type Distribution") %}
+
+                    <div id="deviceTypeChart"></div>
+
+                {% endcomponent %}
+
+                
+            </div>
+            
+
+            <!-- top buyers card -->
+            <div class="container mx-auto flex flex-col gap-8 lg:flex-row mt-6 max-w-2xl rounded-2xl">
+                {% component "unfold/components/card.html" with title=_("Top Buyers") %}
+                    <div class="flow-root">
+                        <ul role="list" class="divide-y divide-gray-200 dark:divide-gray-100">
+                            {% for buyer in top_buyers %}
+                            <li class="py-3 sm:py-4" >
+                              <div style="justify-content: space-between;" class="p-2 flex items-center space-x-4 rtl:space-x-reverse  border-gray-200 rounded-2xl ">
+                                  
+                                  <div  class="flex-1 min-w-1">
+                                    <button data-tooltip-target="tooltip-default" type="button" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-200 hover:text-black">
+                                      {% heroicon_outline 'user' size=16 class="mr-2" %}
+                                      {{ buyer.full_name }}
+                                    </button>
+                                  </div>
+
+                                  <div class="inline-flex items-center text-base font-semibold text-gray-700 dark:text-white">
+                                      {% component "unfold/components/text.html" with color="black" style="font-size: 1rem;" %}
+                                          {{ buyer.total_products }} Product
+                                      {% endcomponent %}
+                                  </div>
+                              </div>
+                            </li>
+
+                            {% endfor %}
+                          <div class="flex justify-center">
+                            <button data-tooltip-target="tooltip-default" type="button" class="h-10 flex justify-center text-center w-full mt-4 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-black">
+                              <a href="http://127.0.0.1:8000/admin/dashboard/buyer/">
+                                <span class="text-gray-800 text-base " >View All</span>
+                              </a>
+                              {% heroicon_outline 'arrow-right' size=20 class="ml-2" %}
+                            </button>
+                          </div>
+                        </ul>
+                    </div>
+                {% endcomponent %}
+            </div>
+
+            <!-- country cards -->
+            <div class="container mx-auto flex flex-col gap-8 lg:flex-row mt-6 max-w-2xl rounded-lg">
+                {% component "unfold/components/img_card.html" with title=_("Top Visitors By Countries")  %}
+                    {% for country in country_cards %}
+                        {% component "unfold/components/img_card.html" with footer=country.title class="mt-4" flag_icon=country.flag %}
+                            {{ country.metric }} Visitors
+                        {% endcomponent %}
+                    {% endfor %}
+                {% endcomponent %}
+            </div>
+
+
+        
+    {% endcomponent %}
+
+            
+    
+
+    <div class="bg-white p-4 border-2 border-gray-200 mt-6 mb-6 max-w-xl w-full rounded-2xl shadow-xl">
+        <div class="flex justify-between">
+          <div class="m-4">
+            <h5 class="leading-none text-3xl font-bold text-gray-600 pb-2">2.4k</h5>
+            <p class="text-base font-bold text-gray-500 dark:text-gray-400">Users this month</p>
+          </div>
+          <div
+            class="flex items-center px-2.5 py-0.5 text-base font-semibold text-green-500 dark:text-green-500 text-center">
+            12%
+            <svg class="w-3 h-3 ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 14">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13V1m0 0L1 5m4-4 4 4"/>
+            </svg>
+          </div>
+        </div>
+        <div id="area-chart"></div>
+      </div>
+
+      
+  
+  
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.46.0/dist/apexcharts.min.js"></script>
+  <script>
+  
+  const options = {
+    chart: {
+      height: "100%",
+      maxWidth: "100%",
+      type: "area",
+      fontFamily: "Inter, sans-serif",
+      dropShadow: {
+        enabled: false,
+      },
+      toolbar: {
+        show: false,
+      },
+    },
+    tooltip: {
+      enabled: true,
+      x: {
+        show: false,
+      },
+    },
+    fill: {
+      type: "gradient",
+      gradient: {
+        opacityFrom: 0.55,
+        opacityTo: 0,
+        shade: "#1C64F2",
+        gradientToColors: ["#1C64F2"],
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    stroke: {
+      width: 6,
+    },
+    grid: {
+      show: false,
+      strokeDashArray: 4,
+      padding: {
+        left: 2,
+        right: 2,
+        top: 0
+      },
+    },
+    series: [
+      {
+        name: "New users",
+        data: [6500, 6418, 6456, 6526, 6356, 6456],
+        color: "#1A56DB",
+      },
+    ],
+    xaxis: {
+      categories: ['01 February', '02 February', '03 February', '04 February', '05 February', '06 February', '07 February'],
+      labels: {
+        show: false,
+      },
+      axisBorder: {
+        show: false,
+      },
+      axisTicks: {
+        show: false,
+      },
+    },
+    yaxis: {
+      show: false,
+    },
+  }
+  
+  if (document.getElementById("area-chart") && typeof ApexCharts !== 'undefined') {
+    const chart = new ApexCharts(document.getElementById("area-chart"), options);
+    chart.render();
+  }
+  
+  </script>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Device Type Chart
+            const deviceData = [{% for device in device_stats %}{{ device.count }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+            const deviceLabels = [{% for device in device_stats %}'{{ device.device_type }}'{% if not forloop.last %}, {% endif %}{% endfor %}];
+            
+            const deviceOptions = {
+                series: deviceData,
+                chart: {
+                    type: 'donut',
+                    height: 350
+                },
+                labels: deviceLabels,
+                colors: ['#1A56DB', '#FDBA8C', '#16BDCA', '#D6E5BE', '#FFCBE1'],
+                legend: {
+                    position: 'bottom',
+                    fontFamily: 'inter',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    markers: {
+                        width: 12,
+                        height: 12,
+                        strokeWidth: 0,
+                        strokeColor: '#fff',
+                        radius: 12
+                    },
+                    itemMargin: {
+                        horizontal: 15,
+                        vertical: 5
+                    },
+                    formatter: function(seriesName, opts) {
+                        return [seriesName, ' : ' + opts.w.globals.series[opts.seriesIndex]]
+                    }
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '70%',
+                            labels: {
+                                show: true,
+                                name: {
+                                    show: true,
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    color: '#111827'
+                                },
+                                value: {
+                                    show: true,
+                                    fontSize: '16px',
+                                    fontWeight: 600,
+                                    color: '#111827',
+                                    formatter: function (val) {
+                                        return val
+                                    }
+                                },
+                                total: {
+                                    show: true,
+                                    label: 'Total',
+                                    fontSize: '18px',
+                                    fontWeight: 600,
+                                    color: '#111827',
+                                    formatter: function (w) {
+                                        return w.globals.seriesTotals.reduce((a, b) => a + b, 0)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                dataLabels: {
+                    enabled: false
+                }
+            };
+
+            const deviceChart = new ApexCharts(document.querySelector("#deviceTypeChart"), deviceOptions);
+            deviceChart.render();
+
+            // Top Categories Chart
+
+        });
+    </script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/ScrollTrigger.min.js"></script>
+
+    <script>
+        // انیمیشن پایه هنگام لود صفحه
+        document.addEventListener('DOMContentLoaded', function() {
+            // انیمیشن ظاهر شدن کارت‌ها با تأخیر
+            gsap.to(".card", {
+                duration: 0.8,
+                opacity: 1,
+                y: 0,
+                stagger: 0.15,
+                ease: "back.out(1.2)"
+            });
+            
+            // انیمیشن هنگام هاور روی کارت‌ها
+            gsap.utils.toArray(".card").forEach(card => {
+                card.addEventListener("mouseenter", () => {
+                    gsap.to(card, {
+                        scale: 1.03,
+                        duration: 0.3,
+                        ease: "power2.out",
+                        y: -5
+                    });
+                });
+                
+                card.addEventListener("mouseleave", () => {
+                    gsap.to(card, {
+                        scale: 1,
+                        duration: 0.3,
+                        ease: "power2.out",
+                        y: 0
+                    });
+                });
+                
+            });
+            
+        });
+    </script>
+{% endblock %}

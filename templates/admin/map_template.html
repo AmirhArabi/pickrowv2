@@ -1,0 +1,63 @@
+{% extends "admin/base_site.html" %}
+{% load heroicons %}
+
+{% block content %}
+    <div class="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-200">
+        {% if count == 0 %}        
+        <!-- show alert if no data -->
+            <div id="toast-default" class="flex items-center w-full p-4 text-red-900 rounded-lg shadow-sm border-2 border-3 border-red-600 bg-red-50" role="alert">
+                <div class="ms-3 text-xl font-normal">There are no data for the selected date range.</div>
+                {% if error %}
+                <div class="ms-3 text-xl font-normal">
+                    {{ error }}
+                </div>
+                {% endif %}
+                <button type="button" class="border border-red-600 ms-auto -mx-1.5 -my-1.5 bg-red-200 text-gray-900 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 inline-flex items-center justify-center h-8 w-8" data-dismiss-target="#toast-default" aria-label="Close">
+                    <span class="sr-only">Close</span>
+                    {% heroicon_outline "x-mark" size=40 class="" %}
+                </button>
+            </div>
+        {% endif%}
+    
+        <div class="flex justify-center flex-col gap-8 items-center">
+            
+            <!-- range input date -->
+            <form method="get">
+                <div id="date-range-picker" date-rangepicker datepicker-buttons class="flex items-center">
+                    <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                        </svg>
+                    </div>
+                    <input id="datepicker-range-start" name="start_date" type="text" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  " placeholder="Select date start">
+                    </div>
+                    <span class="mx-4 text-gray-500">to</span>
+                    <div class="relative">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                        </svg>
+                    </div>
+                    <input id="datepicker-range-end" name="end_date" type="text" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 " placeholder="Select date end">
+                    </div>
+                    <button type="submit" class="ml-6 w-24 bg-blue-500 text-white px-4 py-2 rounded-lg">Filter</button>
+                </div>
+            </form>
+            {% if mapp %}
+                <div class="w-full max-w-6xl" id="map">
+                    {{ mapp|safe }}
+                </div>
+            {% else %}
+                <div class="w-full max-w-6xl" id="map">
+                    <h1>can't show map.</h1>
+                </div>
+            {% endif %}
+        </div>
+
+        
+  
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+{% endblock %}

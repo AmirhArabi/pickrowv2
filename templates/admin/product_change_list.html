@@ -1,0 +1,10 @@
+{% extends "unfold/change_list.html" %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    <li>
+        <a href="export/" class="export_link">
+            <i class="fa fa-download"></i> export (Excel/CSV)
+        </a>
+    </li>
+{% endblock %}

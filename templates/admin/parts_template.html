@@ -1,0 +1,51 @@
+{% extends "admin/base_site.html" %}
+{% load heroicons %}
+{% load unfold%}
+{% block content %}
+    <div class="flex flex-col gap-4 bg-white p-8 rounded-2xl border border-gray-200">
+        {% if error %}        
+        <!-- show alert if no data -->
+            <div id="toast-default" class="flex items-center w-full p-4 text-red-900 rounded-lg shadow-sm border-2 border-3 border-red-600 bg-red-50" role="alert">
+                <div class="ms-3 text-xl font-normal">{{ error }}</div>
+                <button type="button" class="border border-red-600 ms-auto -mx-1.5 -my-1.5 bg-red-200 text-gray-900 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 inline-flex items-center justify-center h-8 w-8" data-dismiss-target="#toast-default" aria-label="Close">
+                    <span class="sr-only">Close</span>
+                    {% heroicon_outline "x-mark" size=40 class="" %}
+                </button>
+            </div>
+        {% endif%}
+        
+
+    
+        <div class="{% if card_included == 1 %}-m-6{% else %} bg-white flex flex-col grow lg:border lg:border-base-200 lg:overflow-hidden lg:rounded lg:shadow-sm{% endif %}  ">
+            <div {% if height %}style="max-height: {{ height }}px;" data-simplebar{% endif %}>
+                <table class="block border-spacing-none border-separate w-full lg:table">
+                        <thead class="text-base-900  {% if height %}sticky top-0{% endif %}">
+                            <tr class="bg-base-50 ">
+                                {% for  header in table.headers %}
+                                    <th class="align-middle border-b border-base-200 font-semibold py-2 text-left text-sm whitespace-nowrap sortable column-description hidden px-3 lg:table-cell {% if card_included == 1 %}first:pl-6 last:pr-6{% endif %}">
+                                        {{ header|capfirst }}
+                                    </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+    
+                    {% if table.rows %}
+                        <tbody class="block lg:table-row-group">
+                            {% for row in table.rows %}
+                                <tr class="{% if striped == 1 %}{% cycle '' 'bg-base-50 ' %}{% endif %} block group {% if forloop.first %}first-row{% endif %} {% if not card_included == 1 %}border mb-3 rounded shadow-sm{% else %}border-b{% endif %} lg:table-row lg:border-none lg:mb-0 lg:shadow-none ">
+                                    {% for cell in row %}
+                                        <td class="px-3 py-2 align-middle flex border-t border-base-200 font-normal gap-4 min-w-0 overflow-hidden text-left before:flex before:capitalize before:content-[attr(data-label)] before:items-center before:mr-auto first:border-t-0 lg:group-[.first-row]:border-t-0 lg:before:hidden lg:first:border-t lg:py-3 lg:table-cell {% if card_included == 1 %}lg:first:pl-6 lg:last:pr-6{% endif %}" {% if table.headers %}data-label="{{ table.headers|index:forloop.counter0 }}"{% endif %}>
+                                            {{ cell }}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    {% endif %}
+                </table>
+            </div>
+    
+
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+{% endblock %}

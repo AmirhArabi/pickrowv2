@@ -1,0 +1,7 @@
+
+<div class="flex flex-row items-center gap-3 justify-between">
+    <a class="text-2xl font-bold text-blue-600" href="{% url 'admin:dashboard_buyer_change' buyer.id %}">{{ name }}</a>
+    <span class="flex flex-row gap-1 items-center font-normal">
+        <span class="font-medium">{{ count }} prod</span>
+    </span>
+</div>

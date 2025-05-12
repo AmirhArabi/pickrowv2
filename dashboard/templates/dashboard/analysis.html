@@ -1,0 +1,20 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+    <canvas id="userCountryChart"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var ctx = document.getElementById('userCountryChart').getContext('2d');
+        var userCountryChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: {{ countries|safe }},
+                datasets: [{
+                    data: {{ countries|safe }},
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                }]
+            }
+        });
+    </script>
+{% endblock %}
