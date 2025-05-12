@@ -187,3 +187,46 @@ def get_product_check_stats(part_number):
         return {
             'success': "false",
         }
+    
+
+def get_product_check_record(product_code):
+    """
+    Check if a product has been verified and return its check record if exists
+    
+    Args:
+        product_code (str): The product code to check
+    
+    Returns:
+        dict: Dictionary containing check status and related records
+            {
+                'is_checked': bool,
+                'check_record': ProductCodeCheck object or None,
+                'product': Product object or None,
+                'error': str (optional error message)
+            }
+    """
+    try:
+        product = Product.objects.get(product_code=product_code)
+        
+        check_record = ProductCodeCheck.objects.filter(product=product).first()
+        
+        return {
+            'is_checked': check_record is not None,
+            'check_record': check_record,
+            'product': product
+        }
+        
+    except Product.DoesNotExist:
+        return {
+            'is_checked': False,
+            'check_record': None,
+            'product': None,
+            'error': 'Product with this code not found'
+        }
+    except Exception as e:
+        return {
+            'is_checked': False,
+            'check_record': None,
+            'product': None,
+            'error': str(e)
+        }

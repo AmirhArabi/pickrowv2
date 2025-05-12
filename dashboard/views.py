@@ -480,6 +480,15 @@ def map_view(request):
             context = admin.site.each_context(request)
             print(request.GET.get("start_date"))
             
+            if request.GET.get("product_code"):
+                product_code = request.GET.get("product_code")
+                product_code_checks = product_code_checks.filter(
+                    product__product_code__icontains=product_code
+                )
+                context.update({
+                    "product_code": product_code,
+                    "data": product_code_checks,
+                })
     
             if request.GET.get("start_date") and request.GET.get("end_date"):
                 start_date = request.GET.get("start_date")

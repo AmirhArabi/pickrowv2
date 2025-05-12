@@ -2,7 +2,7 @@ from django.contrib import admin
 from unfold.admin import ModelAdmin
 from django.urls import reverse
 from django.utils.html import format_html
-from .utils import get_unique_part_numbers
+from .utils import get_unique_part_numbers, get_product_check_record
 from django.contrib import messages
 from .models import Category, Product, ProductCodeCheck, Buyer, UserInfo
 from django.shortcuts import render
@@ -176,7 +176,7 @@ class BuyerAdmin(ModelAdmin, ExportActionModelAdmin, ImportExportModelAdmin):
 @admin.register(Product)
 class ProductAdmin(ModelAdmin, ExportActionModelAdmin, ImportExportModelAdmin):
     change_form_after_template = "dashboard/product_extra_info.html"
-    list_display = ('category', 'product_code', 'part_number', 'description', 'prod_date', 'exp_date', 'quantity', 'is_checked', 'buyer', 'modification_date')
+    list_display = ('category', 'product_code_link', 'part_number', 'description', 'prod_date', 'exp_date', 'quantity', 'is_checked', 'buyer', 'modification_date')
     search_fields = ('product_code', 'description', 'lot_number', 'buyer__full_name')
     list_filter = ('part_number', 'category', 'prod_date', 'exp_date', 'buyer')
     readonly_fields = ('product_code',)
@@ -188,6 +188,15 @@ class ProductAdmin(ModelAdmin, ExportActionModelAdmin, ImportExportModelAdmin):
     save_as = True
     # change_list_template = "admin/product_change_list.html"
 
+
+    def product_code_link(self, obj):
+        print(obj)
+        result = get_product_check_record(obj.product_code)
+        if result['is_checked'] == True:
+            url = reverse('admin_map') + f'?product_code={obj.product_code}'
+            return format_html('<a class="text-blue-600 hover:underline" href="{}">{}</a>', url, obj.product_code)
+        return obj.product_code
+    product_code_link.short_description = 'Product Code'
 
 
     def get_form(self, request, obj=None, **kwargs):
