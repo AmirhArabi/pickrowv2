@@ -10,6 +10,7 @@ window.addEventListener("load", (e) => {
   warnWithoutSaving();
 });
 
+
 /*************************************************************
  * Alpine.sort.js callback after sorting
  *************************************************************/

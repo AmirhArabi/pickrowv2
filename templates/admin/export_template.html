@@ -1,0 +1,108 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+{% load heroicons %}
+
+{% block content %}
+  <div class="flex flex-col gap-4 bg-white p-4 rounded-2xl border border-gray-200">
+    {% if error %}
+      <!-- show alert if no data -->
+      <div id="toast-default" class="flex items-center w-full p-4 text-red-900 rounded-lg shadow-sm border-2 border-3 border-red-600 bg-red-50" role="alert">
+        <div class="ms-3 text-xl font-normal">{{ error }}</div>
+        <button type="button" class="border border-red-600 ms-auto -mx-1.5 -my-1.5 bg-red-200 text-gray-900 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 inline-flex items-center justify-center h-8 w-8" data-dismiss-target="#toast-default" aria-label="Close">
+          <span class="sr-only">Close</span>
+          {% heroicon_outline 'x-mark' size=40 %}
+        </button>
+      </div>
+    {% endif %}
+
+      <div class="flex flex-row gap-8 lg:flex-row">
+        
+      
+        <div class="w-2/3 p-4 border border-gray-200 bg-white rounded-xl shadow-lg">
+                <div class="flex flex-row justify-between">
+                  <h2 class='font-bold text-xl mb-4'> Statics </h2>
+                  <h2 >updated : {{ now }} </h2> 
+                </div>
+
+                <div class="flex flex-wrap gap-4 p-2">
+                  <!-- card User -->
+                  <div class="flex items-center p-4 bg-white flex-1">
+                    <div class="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mr-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-blue-600">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                      </svg>
+
+                    </div>
+                    <div>
+                      <div class="text-2xl font-bold">{{ card_data.unique_userinfo_records}}</div>
+                      <div class="text-sm text-gray-500">User</div>
+                    </div>
+                  </div>
+
+                  <!-- card verifed -->
+                  <div class="flex items-center p-4 bg-white flex-1">
+                    <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mr-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-green-600">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                      </svg>
+
+
+
+                    </div>
+                    <div>
+                      <div class="text-2xl font-bold">{{ card_data.checked_products}}</div>
+                      <div class="text-sm text-gray-500">verifed</div>
+                    </div>
+                  </div>
+
+                  <!-- card product -->
+                  <div class="flex items-center p-4 bg-white flex-1">
+                    <div class="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-lg mr-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-yellow-600">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="text-2xl font-bold">{{ card_data.total_products}}</div>
+                      <div class="text-sm text-gray-500">product</div>
+                    </div>
+                  </div>
+
+                  <!-- card Parts -->
+                  <div class="flex items-center p-4 bg-white flex-1">
+                    <div class="flex items-center justify-center w-12 h-12 bg-red-100 rounded-lg mr-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-red-600">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3" />
+                      </svg>
+
+
+                    </div>
+                    <div>
+                      <div class="text-2xl font-bold">{{ card_data.unique_part_numbers}}</div>
+                      <div class="text-sm text-gray-500">Parts</div>
+                    </div>
+                  </div>
+                  
+                </div>
+                  
+        </div>
+        <div class="w-1/3 p-4 border border-gray-200 bg-white rounded-xl shadow-lg">
+                
+          <a href="#" class="flex flex-col items-center bg-white shadow-sm md:flex-row md:max-w-xl ">
+              <div class="flex flex-col justify-between p-4 leading-normal">
+                  <h5 class="mb-2 text-xl font-bold text-gray-900">Export Saved Data</h5>
+                  <p class="mb-3 font-normal text-gray-700 dark:text-gray-400">Here are you can view and save or export product and customers data.</p>
+                  <button onclick="window.location.href='{% url 'admin_exports' %}'" type="button" class="w-full text-blue-400 bg-white border border-blue-500 hover:bg-blue-800 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                    View Page 
+                  </button>
+              </div>
+              <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-s-lg" src="{% static 'images/data.jpg'%}" alt="data export image">
+          </a>
+       
+        </div>
+
+      </div>
+
+    </div>
+  <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+{% endblock %}

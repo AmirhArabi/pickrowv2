@@ -38,7 +38,7 @@ class CategoryAdmin(ModelAdmin):
         parts = get_unique_part_numbers(obj.id)
         url = reverse('admin_part') + f'?category={obj.id}'
         return format_html("""
-                           <a class="button text-blue bg-gray-50 hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center" href="{}">
+                           <a class="button border border-gray-300 text-blue bg-gray-50 hover:bg-gray-300 focus:ring-4 focus:outline-none focus:ring-gray-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center" href="{}">
                             {} Part
                            </a>""", url, len(parts))
     parts_count.short_description = "Parts"
@@ -190,7 +190,6 @@ class ProductAdmin(ModelAdmin, ExportActionModelAdmin, ImportExportModelAdmin):
 
 
     def product_code_link(self, obj):
-        print(obj)
         result = get_product_check_record(obj.product_code)
         if result['is_checked'] == True:
             url = reverse('admin_map') + f'?product_code={obj.product_code}'

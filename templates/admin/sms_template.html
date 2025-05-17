@@ -1,0 +1,179 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+{% load heroicons %}
+{% block title %}SMS Broadcasting{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-6 ">
+  <div class="w-full bg-white rounded-xl shadow-xl p-6 border border-gray-200">
+    <h1 class="text-2xl font-bold mb-12 text-gray-800 text-center ">
+      
+      <span class="border border-gray-300 p-4 mt-2 rounded rounded-2xl" >SMS Broadcasting </span>
+    </h1>
+
+    <form method="post" id="smsForm">
+      {% csrf_token %}
+      
+      <!-- Recipient Selection Section -->
+      <div class="mb-6">
+        <h3 class="mb-5 text-lg font-medium text-gray-900 ">Select Recipient Type</h3>
+        <ul class="grid w-full gap-6 md:grid-cols-2 ">
+          <li>
+            <input type="radio" id="manualRecipients" name="recipientType" value="manual" class="hidden peer" checked required />
+            <label for="manualRecipients" class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100">
+              <div class="block">
+                <div class="w-full text-lg font-semibold">Manual Entry</div>
+                <div class="w-full">Enter phone numbers directly</div>
+              </div>
+              {% heroicon_outline "document-text" %}
+            </label>
+          </li>
+          <li>
+            <input type="radio" id="listRecipients" name="recipientType" value="list" class="hidden peer" required />
+            <label for="listRecipients" class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100">
+              <div class="block">
+                <div class="w-full text-lg font-semibold">From Lists</div>
+                <div class="w-full">Select from existing contact lists</div>
+              </div>
+              {% heroicon_outline "list-bullet" %}
+            </label>
+          </li>
+        </ul>
+
+        <!-- Manual Input Field -->
+        <div id="manualInput" class="mt-4">
+          <label for="phoneNumbers" class="block mb-2 text-sm font-medium text-gray-900">
+            Phone Numbers (comma separated)
+          </label>
+          <textarea id="phoneNumbers" name="phoneNumbers" rows="3"
+                    class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="+3491234567, +391234567"></textarea>
+        </div>
+
+        <!-- List Selection (Hidden by default) -->
+        <div id="listSelection" class="mt-4 hidden">
+          <label for="recipientLists" class="block mb-2 text-sm font-medium text-gray-900">
+            Select Recipient List
+          </label>
+          <select id="recipientLists" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+            <option selected>All Customers</option>
+            <option>Premium Members</option>
+            <option>Recent Purchases (Last 30 Days)</option>
+            <option>Inactive Customers</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Message Content -->
+      <div class="mb-6">
+        <h3 class="mb-4 text-lg font-medium text-gray-900">Message Content</h3>
+        <div>
+          <label for="messageContent" class="block mb-2 text-sm font-medium text-gray-900">
+            SMS Text
+          </label>
+          <textarea id="messageContent" name="message" rows="4"
+                    class="block w-full p-2.5 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Type your message here..."></textarea>
+        </div>
+        <div class="text-sm text-gray-500 text-right mt-1">
+          <span id="charCount">0</span>/160 characters
+        </div>
+      </div>
+      
+
+      
+      <!-- Action Buttons -->
+      <div class="flex justify-between space-x-3">
+      <button type="button" id="backBtn"
+              class="w-32 text-gray-700 bg-white hover:bg-gray-100 border border-gray-300 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-lg px-5 py-2.5">
+      <a href="{% url 'admin_reports'%}">Back</a>
+      </button>
+
+        <button type="button" id="sendBtn"
+                class="w-32 text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-lg px-5 py-2.5">
+          Send SMS
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center">
+  <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">
+      <i class="fas fa-exclamation-circle text-yellow-500 mr-2"></i>
+      Confirm SMS Sending
+    </h3>
+    <div class="mb-4">
+      <p class="text-sm text-gray-500">
+        You are about to send this message to <span id="recipientCount">0</span> recipients.
+      </p>
+      <div class="mt-2 p-3 bg-gray-50 rounded">
+        <p id="messagePreview" class="text-sm"></p>
+      </div>
+    </div>
+    <div class="flex justify-end space-x-3">
+      <button type="button" id="cancelBtn"
+              class="text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5">
+        Cancel
+      </button>
+      <button type="button" id="confirmBtn"
+              class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-lg px-5 py-2.5">
+        Confirm & Send 
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Toggle between manual input and list selection
+document.querySelectorAll('input[name="recipientType"]').forEach(radio => {
+  radio.addEventListener('change', function() {
+    document.getElementById('manualInput').classList.toggle('hidden', this.value !== 'manual');
+    document.getElementById('listSelection').classList.toggle('hidden', this.value !== 'list');
+  });
+});
+
+// Character counter
+document.getElementById('messageContent').addEventListener('input', function(e) {
+  document.getElementById('charCount').textContent = e.target.value.length;
+});
+
+// Modal handling
+const modal = document.getElementById('confirmationModal');
+document.getElementById('sendBtn').addEventListener('click', function() {
+  // Count recipients
+  const recipientType = document.querySelector('input[name="recipientType"]:checked').value;
+  let count = 0;
+  
+  if (recipientType === 'manual') {
+    const numbers = document.getElementById('phoneNumbers').value;
+    count = numbers.split(',').filter(num => num.trim()).length;
+  } else {
+    // In real implementation, you would count from selected list
+    // return selected item name
+    count = "selected item";
+  }
+  
+  document.getElementById('recipientCount').textContent = count;
+  document.getElementById('messagePreview').textContent = 
+    document.getElementById('messageContent').value || "[No message content]";
+  
+  modal.classList.remove('hidden');
+});
+
+document.getElementById('cancelBtn').addEventListener('click', function() {
+  modal.classList.add('hidden');
+});
+
+document.getElementById('backBtn').addEventListener('click', function(){
+  
+})
+
+document.getElementById('confirmBtn').addEventListener('click', function() {
+  document.getElementById('smsForm').submit();
+  modal.classList.add('hidden');
+});
+</script>
+{% endblock %}

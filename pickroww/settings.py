@@ -262,3 +262,6 @@ COMPRESS_ROOT = BASE_DIR / 'staticfiles'
 COMPRESS_ENABLED = True
 
 STATICFILES_FINDERS = ('compressor.finders.CompressorFinder',)
+account_sid = ""
+auth_token = ""
+phone_number = ""

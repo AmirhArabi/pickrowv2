@@ -1,4 +1,3 @@
-import IP2Location
 import os
 from django.utils import timezone
 from django.conf import settings
@@ -8,6 +7,9 @@ from .models import Product, ProductCodeCheck, UserInfo, Category
 from django.db.models import Count
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Count, Q
+# from twilio.rest import Client
+import matplotlib.pyplot as plt
+from reportlab.lib.utils import ImageReader
 
 def get_client_ip(request):
     """get client ip address"""
@@ -228,5 +230,126 @@ def get_product_check_record(product_code):
             'is_checked': False,
             'check_record': None,
             'product': None,
+            'error': str(e)
+        }
+    
+
+def round_num(number: int):
+    """
+    Convert a number to a string with K for thousands.
+    
+    Args:
+        number (int): The number to convert.
+        
+    Returns:
+        str: The converted number as a string.
+    """
+    if number >= 1000:
+        return f"{number / 1000:.1f}K"
+    return str(number)
+
+
+# def send_sms(phone_number, msg):
+#     account_sid = settings.TWILIO_ACCOUNT_SID
+#     auth_token = settings.TWILIO_AUTH_TOKEN
+#     try:
+#         client = Client(account_sid, auth_token)
+#         sms = client.messages.create(
+#             body=msg,
+#             from_=settings.TWILIO_PHONE_NUMBER,
+#             to=phone_number
+#         )
+#         if sms.error_code:
+#             raise Exception(sms.error_message)
+#         return sms.sid
+#     except Exception as e:
+#         print(f"Error sending SMS: {str(e)}")
+#         return None
+
+def generate_country_chart(top_countries):
+    plt.figure(figsize=(6, 4))
+    countries = [item['country'] for item in top_countries]
+    visits = [item['visits'] for item in top_countries]
+    
+    plt.pie(visits, labels=countries, autopct='%1.1f%%')
+    plt.title('Top Visitor Countries')
+    
+    img_buffer = BytesIO()
+    plt.savefig(img_buffer, format='png')
+    plt.close()
+    img_buffer.seek(0)
+    
+    return ImageReader(img_buffer)
+
+
+def most_checked_countries_by_category(category_id):
+    """
+    Get the most checked countries for a specific category.
+    Args:
+        category_id (int): The ID of the category to filter by.
+    Returns:
+        QuerySet: A queryset containing the most checked countries for the category.
+    """
+    data = ProductCodeCheck.objects.filter(product__category_id=category_id) \
+        .values('user_info__country') \
+        .annotate(total_checks=Count('id')) \
+        .order_by('-total_checks')
+    if data.exists():
+        return data
+    else:
+        return {}
+
+
+def get_category_summary(category_id):
+    """
+    Get summary of all products and parts in a category.
+
+    Args:
+        category_id (int): The
+            ID of the category to summarize.
+    Returns:
+        dict: A dictionary containing the summary of products and parts.
+    """
+    try:
+        category = Category.objects.get(id=category_id)
+        products = Product.objects.filter(category=category)
+        
+        total_products = products.count()
+        unique_parts = products.values('part_number').distinct().count()
+        most_used_country = most_checked_countries_by_category(category_id)
+        
+        return {
+            'category': category.name,
+            'total_products': total_products,
+            'unique_parts': unique_parts,
+            'verified_products': products.filter(code_checks__isnull=False).count(),
+            'unverified_products': total_products - products.filter(code_checks__isnull=False).count(),
+            'last_updated': products.order_by('-modification_date').first().modification_date.strftime("%Y-%m-%d") if total_products > 0 else None,
+            'products': products.values('id', 'part_number', 'category', 'description', 'modification_date'),
+            'most_used_part': Product.objects
+                .filter(category_id=category_id)
+                .annotate(total_checks=Count('code_checks'))  
+                .values('part_number') 
+                .annotate(total_checks=Count('code_checks'))  
+                .order_by('-total_checks')
+                .first(),
+            'most_unused_part': Product.objects
+                .filter(category_id=category_id)
+                .annotate(total_checks=Count('code_checks'))  
+                .values('part_number') 
+                .annotate(
+                    total_checks=Count('code_checks'),  
+                    total_products=Count('id') 
+                )
+                .order_by('total_checks')
+                .first(),
+            'most_used_country': most_used_country if most_used_country else {},
+        }
+    except Category.DoesNotExist:
+        return {
+            'error': 'Category not found'
+        }
+    except Exception as e:
+        return {
             'error': str(e)
         }

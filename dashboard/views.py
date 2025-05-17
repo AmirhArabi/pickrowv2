@@ -1,3 +1,4 @@
+import re
 from django.shortcuts import render
 from django.http import HttpResponseNotAllowed, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -8,7 +9,7 @@ from .throttling import ProductCodeCheckThrottle
 import os
 from dashboard.forms import SearchForm
 from .models import Product, ProductCodeCheck, UserInfo, Category, Buyer
-from .utils import get_client_ip, get_location_from_ip, get_geojson_data, get_unique_part_products, get_product_check_stats
+from .utils import get_client_ip, get_location_from_ip, get_geojson_data, get_unique_part_products, get_product_check_stats, round_num, get_category_summary
 from user_agents import parse
 import json
 import logging
@@ -125,7 +126,8 @@ def verify_product_code(request):
     try:
         with transaction.atomic():
             product = Product.objects.get(product_code=product_code)
-            
+            # product.seen_count += 1
+            # product.save()
             # Get client information
             ip_address = get_client_ip(request)
             location = get_location_from_ip(ip_address)
@@ -169,6 +171,7 @@ def verify_product_code(request):
                 product=product,
                 user_info=user_info,
             )
+
 
             return JsonResponse({
                 'status': 'success',
@@ -298,9 +301,9 @@ def dashboard_callback(request, context):
     sort_by = request.GET.get('category_sort', 'product_count')
     top_categories = get_top_categories()
 
-    total_views = ProductCodeCheck.objects.count()
-    total_users = UserInfo.objects.count()
-    total_products = Product.objects.count()
+    total_views = round_num(ProductCodeCheck.objects.count())
+    total_users = round_num(UserInfo.objects.count())
+    total_products = round_num(Product.objects.count())
 
     cards = [
         {
@@ -457,17 +460,6 @@ from datetime import datetime, time
 from django.utils.timezone import make_aware
 
 
-@staff_member_required
-def reports_view(request):
-    try:
-        context = admin.site.each_context(request)
-        context.update({
-            "title": "PickRow App Reports",
-        })
-        return render(request, "admin/reports_template.html", context)
-
-    except Exception as err :
-        return JsonResponse({'status': 'unsuccess', 'error': err})
 
 @staff_member_required
 def map_view(request):
@@ -626,7 +618,6 @@ EUROPEAN_COUNTRIES = {
 }
 
 def create_product_code_checks():
-    # واکشی تمام محصولات
     products = Product.objects.all()
     if not products.exists():
         print("No products found in the database.")
@@ -661,7 +652,6 @@ def create_product_code_checks():
         )
         
 
-        # ایجاد رکورد ProductCodeCheck
         ProductCodeCheck.objects.create(
             product=product,
             checked_at=fake.date_time_this_year(),
@@ -717,3 +707,203 @@ def parts_view(request):
         return 'aa'
         # prepare this view to return eror 
         
+
+def sms_view(request):
+    try:
+        if request.method == 'GET':
+            context = admin.site.each_context(request)
+            context.update({
+                "title": "SMS",
+            })
+            return render(request, "admin/sms_template.html", context)
+    except Exception as e:
+        print(e)
+        return JsonResponse({'status': 'unsuccess', 'error': str(e)})
+
+
+
+@staff_member_required
+def reports_view(request):
+    try:
+        context = admin.site.each_context(request)
+        now = datetime.today().strftime("%Y-%m-%d")
+        unique_parts = Product.objects.values('part_number').distinct().count()
+        checked_products = Product.objects.filter(code_checks__isnull=False).distinct().count()        
+        total_products = Product.objects.count()
+        unique_userinfo = UserInfo.objects.distinct().count()
+        cateqories = Category.objects.all()
+        products_count = Product.objects.count()
+        checked_products_count = ProductCodeCheck.objects.count()
+        categories_data = []
+        for category in cateqories:
+            data = get_category_summary(category.id)
+            categories_data.append({
+                'name': data['category'],
+                'total_products': data['total_products'],
+                'unique_parts': data['unique_parts'],
+                'verified_products': data['verified_products'],
+                'unverified_products': data['unverified_products'],
+                'last_updated': data['last_updated'],
+                'products': data['products'],
+                'most_used_part': data['most_used_part'],
+                'most_unused_part': data['most_unused_part'],
+                'most_used_country': data['most_used_country'],
+            })
+        data = {
+                'unique_part_numbers': round_num(unique_parts),
+                'checked_products': round_num(checked_products),
+                'total_products': round_num(total_products),
+                'unique_userinfo_records': round_num(unique_userinfo),
+            }
+        context.update({
+            "title": "PickRow App Reports",
+            "now": now,
+            "card_data": data,
+            "categories_data": categories_data,
+            "products_count": products_count,
+            "checked_products_count": checked_products_count,
+            "percentage": float("{:.2f}".format(checked_products_count / products_count * 100)),
+            "user_info_count": UserInfo.objects.count(),
+
+        })
+        return render(request, "admin/reports_template.html", context)
+
+    except Exception as err :
+        print(err)
+        return JsonResponse({'status': 'unsuccess', 'error': err})
+
+def export_view(request):
+    try:
+        if request.method == 'GET':
+            context = admin.site.each_context(request)
+            context.update({
+                "title": "Export Data",
+            })
+            return render(request, "admin/export_template.html", context)
+        if request.method == 'POST':
+            # Handle the export logic here
+            # For example, you can generate a CSV or Excel file and return it as a response
+            # For now, just return a success message
+            return JsonResponse({'status': 'success', 'message': 'Export initiated successfully!'})
+    except Exception as e:
+        print(e)
+        return JsonResponse({'status': 'unsuccess', 'error': str(e)})
+    
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+from io import BytesIO
+from django.db.models import Count
+from .models import Product, ProductCodeCheck, UserInfo
+
+def export_product_report(request):
+    # آماده‌سازی داده‌ها
+    part_summary = Product.objects.values('part_number').annotate(
+        total=Count('id'),
+        checked=Count('code_checks', distinct=True)
+    ).order_by('-total')[:10]
+    
+    top_countries = UserInfo.objects.values('country').annotate(
+        visits=Count('id')
+    ).order_by('-visits')[:5]
+    
+    product_stats = {
+        'total_products': Product.objects.count(),
+        'checked_products': Product.objects.filter(code_checks__isnull=False).count(),
+        'expiring_soon': Product.objects.filter(exp_date__lte=timezone.now() + timezone.timedelta(days=30)).count()
+    }
+
+    # ایجاد PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # 1. عنوان گزارش
+    elements.append(Paragraph("Product Analytics Report", styles['Title']))
+    elements.append(Spacer(1, 12))
+    
+    # 2. خلاصه پارت‌ها
+    part_data = [['Part Number', 'Total Products', 'Checked Products']]
+    for item in part_summary:
+        part_data.append([item['part_number'], item['total'], item['checked']])
+    
+    part_table = Table(part_data)
+    part_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements.append(Paragraph("Part Number Summary", styles['Heading2']))
+    elements.append(Spacer(1, 6))
+    elements.append(part_table)
+    elements.append(Spacer(1, 24))
+    
+    # 3. چارت کشورها (جاوااسکریپت)
+    # در عمل باید از matplotlib یا کتابخانه‌های دیگر برای تولید تصویر استفاده کنید
+    chart_data = [['Country', 'Visits']] + [[item['country'], item['visits']] for item in top_countries]
+    chart_html = f"""
+    <html>
+      <head>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript">
+          google.charts.load('current', {{'packages':['corechart']}});
+          google.charts.setOnLoadCallback(drawChart);
+          function drawChart() {{
+            var data = google.visualization.arrayToDataTable({chart_data});
+            var options = {{
+              title: 'Top Countries by Visits',
+              is3D: true,
+            }};
+            var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+            chart.draw(data, options);
+          }}
+        </script>
+      </head>
+      <body>
+        <div id="piechart" style="width: 500px; height: 300px;"></div>
+      </body>
+    </html>
+    """
+    
+    # در عمل باید این چارت را به تصویر تبدیل کنید
+    elements.append(Paragraph("Visitor Countries", styles['Heading2']))
+    elements.append(Spacer(1, 6))
+    elements.append(Paragraph("(Chart would appear here in actual implementation)", styles['BodyText']))
+    elements.append(Spacer(1, 24))
+    
+    # 4. خلاصه محصولات
+    stats_data = [
+        ["Metric", "Value"],
+        ["Total Products", product_stats['total_products']],
+        ["Checked Products", product_stats['checked_products']],
+        ["Expiring Soon", product_stats['expiring_soon']]
+    ]
+    
+    stats_table = Table(stats_data)
+    stats_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements.append(Paragraph("Product Statistics", styles['Heading2']))
+    elements.append(Spacer(1, 6))
+    elements.append(stats_table)
+    
+    # ساخت PDF
+    doc.build(elements)
+    
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="product_report.pdf"'
+    return response
