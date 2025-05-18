@@ -1,3 +1,4 @@
+from multiprocessing import context
 import re
 from django.shortcuts import render
 from django.http import HttpResponseNotAllowed, JsonResponse
@@ -21,6 +22,7 @@ from django.db.models.functions import TruncDate
 from .forms import MapFilterForm
 from django.utils.html import format_html
 from django.urls import reverse
+from django.core.serializers.json import DjangoJSONEncoder
 
 
 
@@ -734,11 +736,21 @@ def reports_view(request):
         cateqories = Category.objects.all()
         products_count = Product.objects.count()
         checked_products_count = ProductCodeCheck.objects.count()
+        all_buyers = Buyer.objects.annotate(
+        checked_products=Count(
+            'product',
+            filter=Q(product__code_checks__isnull=False),
+            distinct=True
+        )
+    ).order_by('-checked_products')[:10]
+        buyer_names = [str(buyer.full_name) for buyer in all_buyers]
+        checked_counts = [buyer.checked_products for buyer in all_buyers]
         categories_data = []
         for category in cateqories:
             data = get_category_summary(category.id)
             categories_data.append({
                 'name': data['category'],
+                'id': category.id,
                 'total_products': data['total_products'],
                 'unique_parts': data['unique_parts'],
                 'verified_products': data['verified_products'],
@@ -749,6 +761,7 @@ def reports_view(request):
                 'most_unused_part': data['most_unused_part'],
                 'most_used_country': data['most_used_country'],
             })
+
         data = {
                 'unique_part_numbers': round_num(unique_parts),
                 'checked_products': round_num(checked_products),
@@ -764,7 +777,9 @@ def reports_view(request):
             "checked_products_count": checked_products_count,
             "percentage": float("{:.2f}".format(checked_products_count / products_count * 100)),
             "user_info_count": UserInfo.objects.count(),
-
+            "all_buyers": all_buyers,
+            'buyer_names_json': json.dumps(buyer_names, cls=DjangoJSONEncoder, ensure_ascii=False),
+            'checked_counts_json': json.dumps(checked_counts, cls=DjangoJSONEncoder, ensure_ascii=False),
         })
         return render(request, "admin/reports_template.html", context)
 
@@ -799,111 +814,49 @@ from io import BytesIO
 from django.db.models import Count
 from .models import Product, ProductCodeCheck, UserInfo
 
-def export_product_report(request):
-    # آماده‌سازی داده‌ها
-    part_summary = Product.objects.values('part_number').annotate(
-        total=Count('id'),
-        checked=Count('code_checks', distinct=True)
-    ).order_by('-total')[:10]
-    
-    top_countries = UserInfo.objects.values('country').annotate(
-        visits=Count('id')
-    ).order_by('-visits')[:5]
-    
-    product_stats = {
-        'total_products': Product.objects.count(),
-        'checked_products': Product.objects.filter(code_checks__isnull=False).count(),
-        'expiring_soon': Product.objects.filter(exp_date__lte=timezone.now() + timezone.timedelta(days=30)).count()
-    }
+def product_report(request, product_id):
+    try:
+        if request.method == 'GET':
+            product = Category.objects.get(id=product_id)
+            context = admin.site.each_context(request)
+            context.update({
+                "title": f"Product Report for {product.name}",
+                "product": product,
+            })
+            return render(request, "admin/product_report_template.html", context)
+        elif request.method == 'POST':
+            report_type = request.POST.get('report_type')
+            product = Product.objects.get(id=product_id)
+            report_data = ProductCodeCheck.objects.filter(product=product).select_related('user_info')
+            buffer = BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter)
+            styles = getSampleStyleSheet()
+            elements = []
+            elements.append(Paragraph(f"Product Report for {product.product_code}", styles['Title']))
+            elements.append(Spacer(1, 12))
+            elements.append(Paragraph(f"Description: {product.description}", styles['Normal']))
+            elements.append(Spacer(1, 12))
+            elements.append(Paragraph(f"Category: {product.category.name}", styles['Normal']))
+            elements.append(Spacer(1, 12))
+            elements.append(Paragraph(f"Production Date: {product.prod_date.strftime('%Y-%m-%d')}", styles['Normal']))
+            elements.append(Spacer(1, 12))
+            elements.append(Paragraph(f"Expiration Date: {product.exp_date.strftime('%Y-%m-%d')}", styles['Normal']))
+            elements.append(Spacer(1, 12))
+            elements.append(Paragraph(f"Lot Number: {product.lot_number}", styles['Normal']))
+            elements.append(Spacer(1, 12))
+            elements.append(Paragraph(f"Treatment: {product.treatment}", styles['Normal']))
+            elements.append(Spacer(1, 12))
+            elements.append(Paragraph(f"Germination: {product.germination}", styles['Normal']))
+            elements.append(Spacer(1, 12))
+            elements.append(Paragraph(f"Purity: {product.purity}", styles['Normal']))
+            elements.append(Spacer(1, 12))
+            doc.build(elements)
+            buffer.seek(0)
+            response = HttpResponse(buffer, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{product.product_code}_report.pdf"'
+            return response
+    except Exception as e:
+        print('errore in report')
+        print(e)
+        return JsonResponse({'status': 'unsuccess', 'error': 'cant generate report'})
 
-    # ایجاد PDF
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    
-    elements = []
-    styles = getSampleStyleSheet()
-    
-    # 1. عنوان گزارش
-    elements.append(Paragraph("Product Analytics Report", styles['Title']))
-    elements.append(Spacer(1, 12))
-    
-    # 2. خلاصه پارت‌ها
-    part_data = [['Part Number', 'Total Products', 'Checked Products']]
-    for item in part_summary:
-        part_data.append([item['part_number'], item['total'], item['checked']])
-    
-    part_table = Table(part_data)
-    part_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    
-    elements.append(Paragraph("Part Number Summary", styles['Heading2']))
-    elements.append(Spacer(1, 6))
-    elements.append(part_table)
-    elements.append(Spacer(1, 24))
-    
-    # 3. چارت کشورها (جاوااسکریپت)
-    # در عمل باید از matplotlib یا کتابخانه‌های دیگر برای تولید تصویر استفاده کنید
-    chart_data = [['Country', 'Visits']] + [[item['country'], item['visits']] for item in top_countries]
-    chart_html = f"""
-    <html>
-      <head>
-        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-        <script type="text/javascript">
-          google.charts.load('current', {{'packages':['corechart']}});
-          google.charts.setOnLoadCallback(drawChart);
-          function drawChart() {{
-            var data = google.visualization.arrayToDataTable({chart_data});
-            var options = {{
-              title: 'Top Countries by Visits',
-              is3D: true,
-            }};
-            var chart = new google.visualization.PieChart(document.getElementById('piechart'));
-            chart.draw(data, options);
-          }}
-        </script>
-      </head>
-      <body>
-        <div id="piechart" style="width: 500px; height: 300px;"></div>
-      </body>
-    </html>
-    """
-    
-    # در عمل باید این چارت را به تصویر تبدیل کنید
-    elements.append(Paragraph("Visitor Countries", styles['Heading2']))
-    elements.append(Spacer(1, 6))
-    elements.append(Paragraph("(Chart would appear here in actual implementation)", styles['BodyText']))
-    elements.append(Spacer(1, 24))
-    
-    # 4. خلاصه محصولات
-    stats_data = [
-        ["Metric", "Value"],
-        ["Total Products", product_stats['total_products']],
-        ["Checked Products", product_stats['checked_products']],
-        ["Expiring Soon", product_stats['expiring_soon']]
-    ]
-    
-    stats_table = Table(stats_data)
-    stats_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    
-    elements.append(Paragraph("Product Statistics", styles['Heading2']))
-    elements.append(Spacer(1, 6))
-    elements.append(stats_table)
-    
-    # ساخت PDF
-    doc.build(elements)
-    
-    buffer.seek(0)
-    response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="product_report.pdf"'
-    return response

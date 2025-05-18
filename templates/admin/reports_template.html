@@ -103,10 +103,46 @@
 
       </div>
       <div class="flex flex-row gap-8 lg:flex-row">
+
+          <div class="mt-6 w-1/3 bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
+            <h2 class='font-bold text-xl mb-4'> Product Check </h2>
+            <div id="product-check-chart" class="w-full h-min"></div>
+            <div class="flex flex-row justify-between mt-4">
+              <div class="flex flex-col">
+                  <h2 class='font-bold text-xl mb-4'> Total Check </h2>
+                  <p class="text-gray-500">Total check of all products</p>
+                </div>
+                <div class="flex flex-col">
+                  <h2 class='font-bold text-xl mb-4'> {{ card_data.total_checks }} </h2>
+                  <p class="text-gray-500">
+                    <span class="text-green-500 text-lg font-bold">{{ checked_products_count }} </span> of <span class="text-red-500 text-lg font-bold"> {{ products_count }}</span> </p>
+                </div>
+              </div>
+            </div>
+
+        <div class="mt-6 w-2/3 bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
+          <h2 class='font-bold text-xl mb-4'> Buyers Chart </h2>
+          <div id="buyers-chart"></div>
+          <div class="flex flex-row justify-between mt-4">
+            <div class="flex flex-col">
+              <h2 class='font-bold text-xl mb-4'> Total Buyers </h2>
+            </div>
+            <div class="flex flex-col">
+              <h2 class='font-bold text-xl mb-4 text-green-500'>
+                {{ all_buyers|length }} Person
+              </h2>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <div class="flex flex-row gap-8 lg:flex-row">
         <div class="w-full p-4 border border-gray-200 bg-white rounded-xl shadow-lg">
           <h2 class='font-bold text-xl mb-4'> Product List </h2>
           <table class="w-full text-sm text-left text-gray-500 overflow-x-auto bg-white">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 ">
+            <thead class="text-xs text-gray-500 uppercase bg-gray-50 ">
               <tr>
                 <th scope="col" class="px-6 py-3">Product Name</th>
                 <th scope="col" class="px-6 py-3">Total Count</th>
@@ -122,7 +158,11 @@
             <tbody>
               {% for product in categories_data %}
                 <tr class="border-b hover:bg-blue-50 {% cycle 'bg-white' 'bg-gray-50' %}">
-                  <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap border-t">{{ product.name }}</td>
+                  <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap border-t">
+                    <a href="{% url 'admin_product_detail' product_id=product.id %}" class="text-blue-700 hover:underline flex items-center align-center">
+                      {% heroicon_outline "bars-3" size="22" class="text-gray-500 mr-2" %} {{ product.name }}
+                    </a>
+                  </td>
                   <td class="px-6 py-4 border-t">{{ product.total_products }}</td>
                   <td class="px-6 py-4 border-t">{{ product.unique_parts }}</td>
                   <td class="px-6 py-4 border-t">{{ product.verified_products }}</td>
@@ -146,45 +186,14 @@
 
       </div>
 
-      <div class="flex flex-row gap-8 lg:flex-row">
-
-          <div class="mt-6 w-1/3 bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
-            <h2 class='font-bold text-xl mb-4'> Product Check </h2>
-            <div id="product-check-chart" class="w-full h-min"></div>
-            <div class="flex flex-row justify-between mt-4">
-              <div class="flex flex-col">
-                  <h2 class='font-bold text-xl mb-4'> Total Check </h2>
-                  <p class="text-gray-500">Total check of all products</p>
-                </div>
-                <div class="flex flex-col">
-                  <h2 class='font-bold text-xl mb-4'> {{ card_data.total_checks }} </h2>
-                  <p class="text-gray-500">
-                    <span class="text-green-500 text-lg font-bold">{{ checked_products_count }} </span> of <span class="text-red-500 text-lg font-bold"> {{ products_count }}</span> </p>
-                </div>
-              </div>
-            </div>
-
-        <div class="mt-6 w-2/3 bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
-          <h2 class='font-bold text-xl mb-4'> Product Check </h2>
-          <div id="buyers-chart" class="w-full h-min"></div>
-          <div class="flex flex-row justify-between mt-4">
-            <div class="flex flex-col">
-              <h2 class='font-bold text-xl mb-4'> Total Check </h2>
-              <p class="text-gray-500">Total check of all products</p>
-            </div>
-            <div class="flex flex-col">
-              <h2 class='font-bold text-xl mb-4'> {{ card_data.total_checks }} </h2>
-              <p class="text-gray-500">
-                <span class="text-green-500 text-lg font-bold">{{ checked_products_count }} </span> of <span class="text-red-500 text-lg font-bold"> {{ products_count }}</span> </p>
-            </div>
-          </div>
-        </div>
-
-      </div>
+      
+  </div>
+  </div>
 
       
   <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.46.0/dist/apexcharts.min.js"></script>
+
   <script>
     var percentage = {{ percentage }};
 
@@ -272,62 +281,94 @@
         chart.render();
   </script>
   <script>
+    const buyerNames = JSON.parse('{{ buyer_names_json|escapejs }}');
+    const checkedCounts = JSON.parse('{{ checked_counts_json|escapejs }}');
+    
     var options = {
-          series: [{
-          data: [21, 22, 10, 28, 16, 21, 13, 30]
+        series: [{
+            name: 'Checked Products',
+            data: checkedCounts
         }],
-          chart: {
-          height: 350,
-          type: 'bar',
-          events: {
-            click: function(chart, w, e) {
+        chart: {
+            height: 350,
+            type: 'bar',
+            toolbar: {
+                show: true
+            },
+            events: {
+                click: function(chart, w, e) {
+                    console.log(chart, w, e);
+                }
             }
-          }
         },
-        // use pastell colors
-        colors: ['#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0', '#546E7A', '#D4526E', '#08BEB8'],
+        colors: ['#1A56DB', '#FDBA8C'],
         plotOptions: {
-          bar: {
-            columnWidth: '25%',
-            distributed: true,
-          }
+            bar: {
+                columnWidth: '25%',
+                distributed: true,
+                borderRadiusApplication: "end",
+                borderRadius: 8,
+            }
         },
-        stroke:{
-          curve:"smooth",
-          width: 2,
-          lineCap: 'round',
+        stroke: {
+            curve: "smooth",
+            width: 2,
+            lineCap: 'round',
         },
-        markers:{
-            shape: "circle", // یا "square" برای مربع
-            radius: 5, // اندازه نقطه
-          },
+        grid: {
+            show: false,
+            strokeDashArray: 4,
+            padding: {
+                top: -14,
+                right: 2,
+                left: 2
+            },
+        },
+        markers: {
+            shape: "circle",
+            radius: 5,
+        },
         dataLabels: {
-          enabled: false
+            enabled: false
         },
         legend: {
-          show: false
+            show: false
         },
         xaxis: {
-          categories: [
-            ['John', 'Doe'],
-            ['Joe', 'Smith'],
-            ['Jake', 'Williams'],
-            'Amber',
-            ['Peter', 'Brown'],
-            ['Mary', 'Evans'],
-            ['David', 'Wilson'],
-            ['Lily', 'Roberts'], 
-          ],
-          labels: {
-            style: {
-              colors: ['#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0', '#546E7A', '#D4526E', '#08BEB8'],
-              fontSize: '12px',
+            categories: buyerNames,
+            labels: {
+                style: {
+                    colors: '#1A56DB',
+                    fontSize: '12px',
+                },
+                formatter: function(value) {
+                    return value || '';
+                }
+            },
+            axisTicks: {
+              show: false,
             }
-          }
+        },
+        yaxis: {
+            title: {
+                text: 'Total Products',
+                style: {
+                    color: '#1A56DB',
+                    fontSize: '16px',
+                    fontWeight: 'bold'
+                }
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function(val) {
+                    return val + " product";
+                }
+            }
         }
-        };
-
-        var chart = new ApexCharts(document.querySelector("#buyers-chart"), options);
-        chart.render();
-  </script>
+    };
+    var chart = new ApexCharts(document.querySelector("#buyers-chart"), options);
+    chart.render();
+</script>
+  
 {% endblock %}
