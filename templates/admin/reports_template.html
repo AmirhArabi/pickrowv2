@@ -186,13 +186,42 @@
 
       </div>
 
-      
-  </div>
-  </div>
+      <div class="mt-6 w-2/3 bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
+          <h2 class='font-bold text-xl mb-4'> Checked Product Chart </h2>
+          <div id="monthlyChart"></div>
+          <div class="flex flex-row justify-between mt-4">
+            <div class="flex flex-col">
+              <h2 class='font-bold text-xl mb-4'> Total Checked Product In Last 12 Month </h2>
+            </div>
+            <div class="flex flex-col">
+              <h2 class='font-bold text-xl mb-4 text-green-500'>
+                {{ monthly_report_counts }} Product
+              </h2>
+            </div>
+          </div>
+      </div>
+
+      <div class="mt-6  bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
+          <div id="worldMap"></div>
+          <div class="flex flex-row justify-between mt-4">
+            <div class="flex flex-col">
+              <h2 class='font-bold text-xl mb-4'> Total Countries </h2>
+            </div>
+            <div class="flex flex-col">
+              <h2 id="total-countries" class='font-bold text-xl mb-4 text-green-500'>
+                
+              </h2>
+            </div>
+          </div>
+      </div>
 
       
   <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.46.0/dist/apexcharts.min.js"></script>
+  <script src="https://code.highcharts.com/maps/highmaps.js"></script>
+  <script src="https://code.highcharts.com/maps/modules/exporting.js"></script>
+  <script src="https://code.highcharts.com/mapdata/custom/world.js"></script>
+  
 
   <script>
     var percentage = {{ percentage }};
@@ -369,6 +398,155 @@
     };
     var chart = new ApexCharts(document.querySelector("#buyers-chart"), options);
     chart.render();
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const options = {
+            series: [{
+                name: 'checked product count',
+                data: {{ monthly_report_count|safe }}
+            }],
+            chart: {
+                height: 350,
+                type: 'area',
+                rtl: true,
+                toolbar: {
+                    show: true
+                },
+                dropShadow: {
+                  enabled: false,
+                },
+                zoom: {
+                    enabled: false
+                }
+            },
+            fill: {
+              type: "gradient",
+              gradient: {
+                opacityFrom: 0.55,
+                opacityTo: 0,
+                shade: "#1C64F2",
+                gradientToColors: ["#1C64F2"],
+              }
+            },
+            colors: ['#1A56DB'],
+            stroke: {
+                width: 3,
+            },
+            markers: {
+                size: 5,
+                hover: {
+                    size: 7
+                }
+            },
+            xaxis: {
+                categories: {{ monthly_report_months|safe }},
+                labels: {
+                    style: {
+                        fontSize: '12px',
+                    },
+                    formatter: function(value) {
+                        return value;
+                    }
+                }
+            },
+            yaxis: {
+                title: {
+                    text: 'checked products',
+                    style: {
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        color: '#1A56DB'
+                    }
+                },
+                min: 0
+            },
+            
+            tooltip: {
+                y: {
+                    formatter: function(val) {
+                        return val + " checked products";
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: false
+            },
+            grid: {
+                borderColor: '#f1f1f1',
+                show: true,
+                strokeDashArray: 4,
+                padding: {
+                  left: 2,
+                  right: 2,
+                  top: 0,
+                },
+            }
+        };
+
+        const chart = new ApexCharts(document.querySelector("#monthlyChart"), options);
+        chart.render();
+    });
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  
+    const countriesData = JSON.parse('{{ countries_json|escapejs }}');
+    const mapData = countriesData.map(country => ({
+        'hc-key': country.country_short.toLowerCase(),
+        'name': country.country,
+        'value': country.total_checks
+    }));
+    document.querySelector('#total-countries').innerHTML = countriesData.length + ' Country';
+    
+    Highcharts.mapChart('worldMap', {
+        chart: {
+            map: 'custom/world',
+        }, 
+        title: {
+            text: 'Country Wise Product Check',
+            alert: false,
+            style: {
+                fontSize: '20px',
+                fontWeight: 'bold',
+            },
+            align : 'left',
+            verticalAlign: 'top',
+        },       
+        mapNavigation: {
+            enabled: true,
+            buttonOptions: {
+                verticalAlign: 'bottom'
+            }
+        },
+        colorAxis: {
+            min: 0,
+            minColor: '#E6E6E6',
+            maxColor: '#1A56DB'
+        },
+        
+        series: [{
+            data: mapData,
+            states: {
+                hover: {
+                    color: '#7cade6'
+                }
+            },
+            dataLabels: {
+                enabled: false,
+            },
+            tooltip: {
+                pointFormat: '{point.name}: <b>{point.value}</b> products'
+            }
+        }],
+        
+        credits: {
+            enabled: false
+        }
+    });
+});
 </script>
   
 {% endblock %}

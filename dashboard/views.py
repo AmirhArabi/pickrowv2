@@ -10,7 +10,7 @@ from .throttling import ProductCodeCheckThrottle
 import os
 from dashboard.forms import SearchForm
 from .models import Product, ProductCodeCheck, UserInfo, Category, Buyer
-from .utils import get_client_ip, get_location_from_ip, get_geojson_data, get_unique_part_products, get_product_check_stats, round_num, get_category_summary
+from .utils import get_client_ip, get_location_from_ip, get_geojson_data, get_unique_part_products, get_product_check_stats, round_num, get_category_summary, monthly_report
 from user_agents import parse
 import json
 import logging
@@ -736,6 +736,7 @@ def reports_view(request):
         cateqories = Category.objects.all()
         products_count = Product.objects.count()
         checked_products_count = ProductCodeCheck.objects.count()
+        monthly_reports_data = monthly_report()
         all_buyers = Buyer.objects.annotate(
         checked_products=Count(
             'product',
@@ -745,6 +746,13 @@ def reports_view(request):
     ).order_by('-checked_products')[:10]
         buyer_names = [str(buyer.full_name) for buyer in all_buyers]
         checked_counts = [buyer.checked_products for buyer in all_buyers]
+        countries = (
+            UserInfo.objects
+            .filter(product_checks__isnull=False)
+            .values('country', 'country_short')
+            .annotate(total_checks=Count('product_checks'))
+            .order_by('-total_checks')
+        )
         categories_data = []
         for category in cateqories:
             data = get_category_summary(category.id)
@@ -780,6 +788,10 @@ def reports_view(request):
             "all_buyers": all_buyers,
             'buyer_names_json': json.dumps(buyer_names, cls=DjangoJSONEncoder, ensure_ascii=False),
             'checked_counts_json': json.dumps(checked_counts, cls=DjangoJSONEncoder, ensure_ascii=False),
+            'monthly_report_count': monthly_reports_data['counts'],
+            'monthly_report_months': monthly_reports_data['months'],
+            'monthly_report_counts': monthly_reports_data['total_checks'],
+            'countries_json': json.dumps(list(countries), cls=DjangoJSONEncoder, ensure_ascii=False),
         })
         return render(request, "admin/reports_template.html", context)
 

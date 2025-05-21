@@ -1,3 +1,5 @@
+from collections import OrderedDict
+from datetime import datetime, timedelta
 import os
 from django.utils import timezone
 from django.conf import settings
@@ -10,6 +12,7 @@ from django.db.models import Count, Q
 # from twilio.rest import Client
 import matplotlib.pyplot as plt
 from reportlab.lib.utils import ImageReader
+from django.db.models.functions import TruncMonth
 
 def get_client_ip(request):
     """get client ip address"""
@@ -353,3 +356,38 @@ def get_category_summary(category_id):
         return {
             'error': str(e)
         }
+
+def monthly_report():
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=365)
+    
+    # ایجاد دیکشنری برای همه ماه‌های ۱۲ ماه اخیر
+    all_months = OrderedDict()
+    current = start_date
+    while current <= end_date:
+        month_key = current.strftime('%Y-%m')
+        all_months[month_key] = 0
+        current = current + timedelta(days=32)
+        current = current.replace(day=1)
+    
+    # پر کردن داده‌های موجود
+    monthly_data = (
+        ProductCodeCheck.objects
+        .filter(checked_at__gte=start_date)
+        .annotate(month=TruncMonth('checked_at'))
+        .values('month')
+        .annotate(count=Count('id'))
+        .order_by('month')
+    )
+    
+    for item in monthly_data:
+        month_key = item['month'].strftime('%Y-%m')
+        all_months[month_key] = item['count']
+    
+    context = {
+        'months': json.dumps(list(all_months.keys())),
+        'counts': json.dumps(list(all_months.values())),
+        'total_checks': sum(all_months.values()),
+    }
+    return context
+
