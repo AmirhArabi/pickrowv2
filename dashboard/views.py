@@ -10,7 +10,7 @@ from .throttling import ProductCodeCheckThrottle
 import os
 from dashboard.forms import SearchForm
 from .models import Product, ProductCodeCheck, UserInfo, Category, Buyer
-from .utils import get_client_ip, get_location_from_ip, get_geojson_data, get_unique_part_products, get_product_check_stats, round_num, get_category_summary, monthly_report
+from .utils import get_client_ip, get_location_from_ip, get_geojson_data, get_unique_part_products, get_product_check_stats, round_num, get_category_summary, monthly_report, user_distribution_country
 from user_agents import parse
 import json
 import logging
@@ -737,6 +737,7 @@ def reports_view(request):
         products_count = Product.objects.count()
         checked_products_count = ProductCodeCheck.objects.count()
         monthly_reports_data = monthly_report()
+        user_distribution_country_data = user_distribution_country()
         all_buyers = Buyer.objects.annotate(
         checked_products=Count(
             'product',
@@ -792,6 +793,9 @@ def reports_view(request):
             'monthly_report_months': monthly_reports_data['months'],
             'monthly_report_counts': monthly_reports_data['total_checks'],
             'countries_json': json.dumps(list(countries), cls=DjangoJSONEncoder, ensure_ascii=False),
+            'user_distribution_country': json.dumps(user_distribution_country_data['top_countries'], cls=DjangoJSONEncoder, ensure_ascii=False),
+            'user_distribution_country_total': json.dumps(user_distribution_country_data['total_users'], cls=DjangoJSONEncoder, ensure_ascii=False),
+            'user_distribution_country_count': user_distribution_country_data['countries_count']
         })
         return render(request, "admin/reports_template.html", context)
 

@@ -391,3 +391,33 @@ def monthly_report():
     }
     return context
 
+def user_distribution_country():
+    try:
+        top_countries = (
+        UserInfo.objects
+        .values('country')
+        .annotate(user_count=Count('id'))
+        .order_by('-user_count')[:5]
+    )
+    
+        total_users = sum(item['user_count'] for item in top_countries)
+        chart_data = [
+            {
+                'country': item['country'],
+                'count': item['user_count'],
+                'percentage': round((item['user_count'] / total_users) * 100, 1)
+            }
+            for item in top_countries
+        ]
+        context = {
+            'top_countries': chart_data,
+            'total_users': total_users,
+            'countries_count': len(chart_data),
+        }
+        return context
+    except Exception as e:
+        print(f"Error in user_distribution_country: {str(e)}")
+        return {
+            'success': "false",
+            'error': str(e)
+        }

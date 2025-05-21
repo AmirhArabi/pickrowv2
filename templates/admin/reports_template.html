@@ -15,10 +15,10 @@
       </div>
     {% endif %}
 
-      <div class="flex flex-row gap-8 lg:flex-row">
+      <div class="flex flex-col md:flex-row gap-4">
         
       
-        <div class="w-2/3 p-4 border border-gray-200 bg-white rounded-xl shadow-lg">
+        <div class="w-full p-4 border border-gray-200 bg-white rounded-xl shadow-lg md:w-2/3">
                 <div class="flex flex-row justify-between">
                   <h2 class='font-bold text-xl mb-4'> Statics </h2>
                   <h2 >updated : {{ now }} </h2> 
@@ -86,7 +86,7 @@
                 </div>
                   
         </div>
-        <div class="w-1/3 p-4 border border-gray-200 bg-white rounded-xl shadow-lg">
+        <div class="w-full md:w-1/3 p-4 border border-gray-200 bg-white rounded-xl shadow-lg">
                 
           <a href="#" class="flex flex-col items-center bg-white shadow-sm md:flex-row md:max-w-xl ">
               <div class="flex flex-col justify-between p-4 leading-normal">
@@ -102,9 +102,9 @@
         </div>
 
       </div>
-      <div class="flex flex-row gap-8 lg:flex-row">
+      <div class="flex flex-col gap-8 lg:flex-row">
 
-          <div class="mt-6 w-1/3 bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
+          <div class="mt-6 w-full md:w-1/3 bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
             <h2 class='font-bold text-xl mb-4'> Product Check </h2>
             <div id="product-check-chart" class="w-full h-min"></div>
             <div class="flex flex-row justify-between mt-4">
@@ -120,7 +120,7 @@
               </div>
             </div>
 
-        <div class="mt-6 w-2/3 bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
+        <div class="mt-6 w-full md:w-2/3 bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
           <h2 class='font-bold text-xl mb-4'> Buyers Chart </h2>
           <div id="buyers-chart"></div>
           <div class="flex flex-row justify-between mt-4">
@@ -128,7 +128,7 @@
               <h2 class='font-bold text-xl mb-4'> Total Buyers </h2>
             </div>
             <div class="flex flex-col">
-              <h2 class='font-bold text-xl mb-4 text-green-500'>
+              <h2 class='font-bold text-xl mb-4 text-blue-800'>
                 {{ all_buyers|length }} Person
               </h2>
             </div>
@@ -138,8 +138,57 @@
       </div>
 
 
+      
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="mt-6 w-full bg-white border border-gray-300 shadow-xl p-4 rounded-2xl sm:w-2/3">
+            <h2 class='font-bold text-xl mb-4'> Checked Product Chart </h2>
+            <div id="monthlyChart"></div>
+            <div class="flex flex-row justify-between mt-4">
+              <div class="flex flex-col">
+                <h2 class='font-bold text-xl mb-4'> Total Checked Product In Last 12 Month </h2>
+              </div>
+              <div class="flex flex-col">
+                <h2 class='font-bold text-xl mb-4 text-sky-500'>
+                  {{ monthly_report_counts }} Product
+                </h2>
+              </div>
+            </div>
+        </div>
+
+
+        <div class="mt-6 w-full bg-white border border-gray-300 shadow-xl p-4 rounded-2xl sm:w-1/3">
+            <h2 class='font-bold text-xl mb-4'> User Country Distribution </h2>
+            <div id="CountryDistributionChart" class="w-full h-min"></div>
+            <div class="flex flex-row justify-between mt-4">
+              <div class="flex flex-col">
+                  <h2 class='font-bold text-xl mb-4'> Total User </h2>
+                  <p class="text-gray-500">user of all countries</p>
+                </div>
+                <div class="flex flex-col">
+                  <h2 class='font-bold text-xl mb-4'> {{ card_data.total_checks }} </h2>
+                  <p class="text-gray-500">
+                    <span class="text-sky-500 text-lg font-bold">{{ user_distribution_country_total }} </span> user in <span class="text-sky-950 text-lg font-bold"> {{ user_distribution_country_count }} country</span> </p>
+                </div>
+              </div>
+          </div>  
+      </div>
+
+      <div class="mt-6  bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
+          <div id="worldMap"></div>
+          <div class="flex flex-row justify-between mt-4">
+            <div class="flex flex-col">
+              <h2 class='font-bold text-xl mb-4'> Total Countries </h2>
+            </div>
+            <div class="flex flex-col">
+              <h2 id="total-countries" class='font-bold text-xl mb-4 text-sky-700'>
+                
+              </h2>
+            </div>
+          </div>
+      </div>
+
       <div class="flex flex-row gap-8 lg:flex-row">
-        <div class="w-full p-4 border border-gray-200 bg-white rounded-xl shadow-lg">
+        <div class="w-full p-4 border border-gray-200 bg-white rounded-xl shadow-lg overflow-x-auto md:overflow-visible touch-pan-x">
           <h2 class='font-bold text-xl mb-4'> Product List </h2>
           <table class="w-full text-sm text-left text-gray-500 overflow-x-auto bg-white">
             <thead class="text-xs text-gray-500 uppercase bg-gray-50 ">
@@ -183,36 +232,6 @@
             </tbody>
           </table>
         </div>
-
-      </div>
-
-      <div class="mt-6 w-2/3 bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
-          <h2 class='font-bold text-xl mb-4'> Checked Product Chart </h2>
-          <div id="monthlyChart"></div>
-          <div class="flex flex-row justify-between mt-4">
-            <div class="flex flex-col">
-              <h2 class='font-bold text-xl mb-4'> Total Checked Product In Last 12 Month </h2>
-            </div>
-            <div class="flex flex-col">
-              <h2 class='font-bold text-xl mb-4 text-green-500'>
-                {{ monthly_report_counts }} Product
-              </h2>
-            </div>
-          </div>
-      </div>
-
-      <div class="mt-6  bg-white border border-gray-300 shadow-xl p-4 rounded-2xl">
-          <div id="worldMap"></div>
-          <div class="flex flex-row justify-between mt-4">
-            <div class="flex flex-col">
-              <h2 class='font-bold text-xl mb-4'> Total Countries </h2>
-            </div>
-            <div class="flex flex-col">
-              <h2 id="total-countries" class='font-bold text-xl mb-4 text-green-500'>
-                
-              </h2>
-            </div>
-          </div>
       </div>
 
       
@@ -488,8 +507,6 @@
         chart.render();
     });
 </script>
-
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   
@@ -547,6 +564,121 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+</script>
+<script>
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        
+        const rawData = JSON.parse('{{ user_distribution_country|safe }}');
+    
+    const options = {
+        series: rawData.map(item => item.count),
+        dataLabels: {
+            enabled: false,
+        },
+        chart: {
+            type: 'donut',
+            height: 400,
+            fontFamily: 'Vazir, Tahoma',
+            toolbar:{
+              show: true,
+              tools:{
+                download: true,
+              }
+            },
+            animations: {
+                enabled: true,
+                speed: 800
+            }
+        },
+        labels: rawData.map(item => item.country),
+        colors: ['#003f5c', '#374c80', '#7a5195', '#bc5090', '#ef5675'],
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '70%',
+                    labels: {
+                        show: true,
+                        name: {
+                            show: true,
+                            fontFamily: "Inter, sans-serif",
+                            offsetY: 20,
+                        },
+                        total: {
+                            showAlways: true,
+                            show: true,
+                            label: 'Total Users',
+                            formatter: function (w) {
+                              const sum = w.globals.seriesTotals.reduce((a, b) => {
+                                return a + b
+                              }, 0)
+                              return sum
+                            },
+                        },
+                        value: {
+                          show: true,
+                          fontFamily: "Inter, sans-serif",
+                          offsetY: -20,
+                          formatter: function (value) {
+                            return value 
+                          },
+                        },
+                        name: {
+                            offsetY: 20
+                        }
+                    }
+                }
+            }
+        },
+        legend: {
+            position: 'bottom',
+            formatter: function(seriesName, opts) {
+                return seriesName + ': ' + opts.w.globals.series[opts.seriesIndex] 
+            },
+            horizontalAlign: 'center',
+            markers: {
+                radius: 4
+            },
+            itemMargin: {
+                horizontal: 10,
+                vertical: 5
+            }
+        },
+        yaxis: {
+          labels: {
+            formatter: function (value) {
+              return value + ' users' + '- percent: ' + ((value / rawData.reduce((a, b) => a + b.count, 0)) * 100).toFixed(1) + '%';
+            },
+          },
+        },
+        responsive: [{
+            breakpoint: 768,
+            options: {
+                chart: {
+                    height: 300
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }]
+    };
+        
+        const chart = new ApexCharts(document.querySelector("#CountryDistributionChart"), options);
+        chart.render();
+        
+    } catch (error) {
+        console.error('Chart initialization failed:', error);
+        document.getElementById('donutChart').innerHTML = `
+            <div class="p-4 bg-red-50 text-red-600 rounded">
+                cant show chart data please call to admin!!!
+            </div>
+        `;
+    }
+});
+
 </script>
   
 {% endblock %}
